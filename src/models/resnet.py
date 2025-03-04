@@ -20,27 +20,38 @@ class ResNet(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
         self.res1 = ResBlock(64)
-        self.pool1 = nn.MaxPool2d(2, 2) # (64, 32, 32)
+        self.pool1 = nn.MaxPool2d(2, 2) # (64, 64, 64)
         
         self.conv2 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.res2 = ResBlock(128)
-        self.pool2 = nn.MaxPool2d(2, 2) # (128, 16, 16)
+        self.pool2 = nn.MaxPool2d(2, 2) # (128, 32, 32)
         
         self.conv3 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
         self.res3 = ResBlock(256)
-        self.pool3 = nn.MaxPool2d(2, 2) # (256, 8, 8)
+        self.pool3 = nn.MaxPool2d(2, 2) # (256, 16, 16)
 
         self.conv4 = nn.Conv2d(256, 512, kernel_size=3, padding=1)
         self.res4 = ResBlock(512)
-        self.pool4 = nn.MaxPool2d(2, 2) # (512, 4, 4)
+        self.pool4 = nn.MaxPool2d(2, 2) # (512, 8, 8)
+
+        self.conv5 = nn.Conv2d(512, 1024, kernel_size=3, padding=1)
+        self.res5 = ResBlock(1024)
+        self.pool5 = nn.MaxPool2d(2, 2) # (1024, 4, 4)
+        
+        self.relu = nn.ReLU(inplace=True)
         
         self.flatten = nn.Flatten()
         self.fc = nn.Sequential(
-            nn.Linear(512 * 4 * 4, 512),
+            nn.Linear(1024 * 4 * 4, 512),
             nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
             nn.Linear(512, 256),
             nn.ReLU(inplace=True),
-            nn.Linear(256, 29)
+            nn.Dropout(0.4),
+            nn.Linear(256, 128),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.4),
+            nn.Linear(128, 27)
         )
 
     
@@ -68,6 +79,10 @@ class ResNet(nn.Module):
 
         x = self.conv4(x)
         x = self.res4(x)
+        x = self.pool4(x)
+
+        x = self.conv5(x)
+        x = self.res5(x)
         x = self.pool4(x)
 
         x = self.flatten(x)
