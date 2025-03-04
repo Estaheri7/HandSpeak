@@ -11,8 +11,8 @@ class ResNet(nn.Module):
     
     Attributes:
         conv1 (nn.Conv2d): Initial convolutional layer.
-        res1, res2, res3, res4 (ResBlock): Residual blocks.
-        pool1, pool2, pool3, pool4 (nn.MaxPool2d): Max pooling layers.
+        res1, res2, res3, res4, res5 (ResBlock): Residual blocks.
+        pool1, pool2, pool3, pool4, pool5 (nn.MaxPool2d): Max pooling layers.
         flatten (nn.Flatten): Flatten layer to prepare for fully connected layers.
         fc (nn.Sequential): Fully connected layers for classification.
     """
@@ -87,7 +87,7 @@ class ResNet(nn.Module):
 
         x = self.flatten(x)
         x = self.fc(x)
-        return x  # out put shape -> (batch_size, 29)
+        return x  # out put shape -> (batch_size, 27)
 
 
 class ResBlock(nn.Module):
