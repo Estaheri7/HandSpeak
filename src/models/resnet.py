@@ -51,7 +51,7 @@ class ResNet(nn.Module):
             nn.Linear(256, 128),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
-            nn.Linear(128, 27)
+            nn.Linear(128, 29)
         )
 
     
@@ -87,7 +87,7 @@ class ResNet(nn.Module):
 
         x = self.flatten(x)
         x = self.fc(x)
-        return x  # out put shape -> (batch_size, 27)
+        return x  # out put shape -> (batch_size, 29)
 
 
 class ResBlock(nn.Module):
