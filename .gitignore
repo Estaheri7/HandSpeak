@@ -1,3 +1,7 @@
 venv
+.vscode
+__pycache__
 data/raw
 data/processed
+dataset
+weights
