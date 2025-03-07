@@ -3,11 +3,12 @@ import sys
 
 from collections import Counter, deque
 import time
+import tkinter as tk
 
 import numpy as np
 
 import cv2
-from PIL import Image
+from PIL import Image, ImageTk
 import torch
 import torchvision.transforms as transforms
 
@@ -27,6 +28,9 @@ class HandSpeak:
         # Settings for video capture
         self.capture = cv2.VideoCapture(0)
 
+        # ROI to create a box for hand gestures
+        self.region_of_interest = None
+
         self.frame_buffer = deque() # Store frames
         self.buffer_size = buffer_size
         self.typed_text = ""  # Store the final predicted word
@@ -40,33 +44,63 @@ class HandSpeak:
         self.cursor_blink_interval = 0.5  # Blink interval in seconds
         self.last_cursor_blink_time = time.time()
 
+        # Tkinter setup
+        self.root = tk.Tk()
+        self.root.title('American Sign Language')
+        self.root.geometry("800x600")
+        self.root.configure(bg='#272727')
+        self.root.protocol("WM_DELETE_WINDOW", self.terminate_video_loop)
+        
+        # Remove the default title bar
+        self.root.overrideredirect(True)
+
+        # Custom title bar
+        self.title_bar = tk.Frame(self.root, bg='#3ba47b', relief='solid', bd=2)
+        self.title_bar.pack(fill="x", side="top")
+
+        # Exit button
+        self.exit_button = tk.Button(self.title_bar, text="Exit", command=self.close_window, bg='#3ed8c3', fg='white', bd=0)
+        self.exit_button.pack(side="right")
+
+        # A label for Region of interest (which contains hand gestures)
+        self.video_label = tk.Label(self.root, 
+                                    bg='black', 
+                                    bd=2,
+                                    relief='solid',
+                                    highlightthickness=3,
+                                    highlightbackground="#3ba47b",
+                                    highlightcolor="#3ba47b")
+        self.video_label.place(x=10, y=35)
+
+        # Label to display the most common prediction
+        self.prediction_label = tk.Label(self.root, text="Prediction: ", bg='#272727', fg='#3ed8c3', font=('Arial', 28, 'bold'))
+        self.prediction_label.place(x=370, y=200)
+
+        # Label to display the typed text
+        self.typed_text_label = tk.Label(self.root, text="Typed Text: ", bg='#272727', fg='#3ed8c3', font=('Arial', 24, 'bold'))
+        self.typed_text_label.place(x=10, y=400)
+    
+    def run(self):
+        self.video_loop()
+        self.root.mainloop()
+
+    def close_window(self):
+        self.root.quit()
+
     def video_loop(self):
-        while True:
-            _, frame = self.capture.read()
+        ret, frame = self.capture.read()
+        if ret:
             frame = cv2.flip(frame, 1)  # Flip to simulate mirror image
             most_common_prediction = self.video_capture(frame)
             display_text = self.text_handler(most_common_prediction)
-            
-            # Display the prediction on the frame
-            cv2.putText(frame, f'Prediction: {most_common_prediction}', (self.x1, self.y2+30), 
-                        cv2.FONT_HERSHEY_PLAIN, 2, (0, 255, 0), 2)
+            self.tkinter_handler(most_common_prediction, display_text)
 
-            # Show the typed text with the cursor
-            cv2.putText(frame, f'Typed Text: {display_text}', (self.x1, self.y2 + 70),
-                        cv2.FONT_HERSHEY_PLAIN, 1.5, (0, 255, 255), 2)
-
-            # Show the frame
-            cv2.imshow("Frame", frame)
-
-            # Break loop on keypress
-            if cv2.waitKey(10) & 0xFF == ord('`'):
-                break
-        
-        self.terminate_video_loop()
+        # Call this function again after 10 milliseconds
+        self.root.after(10, self.video_loop)
         
     def terminate_video_loop(self):
         self.capture.release()
-        cv2.destroyAllWindows()
+        self.root.destroy()
     
     def video_capture(self, frame):
         # Define region of interest for hand detection
@@ -75,11 +109,11 @@ class HandSpeak:
         cv2.rectangle(frame, (self.x1-1, self.y1-1), (self.x2+1, self.y2+1), (255, 0, 0), 1)
 
         # Extract the ROI
-        region_of_interest = frame[self.y1:self.y2, self.x1:self.x2]
+        self.region_of_interest = frame[self.y1:self.y2, self.x1:self.x2]
 
         # Same filters as data creation phase
-        region_of_interest = cv2.cvtColor(region_of_interest, cv2.COLOR_BGR2RGB)
-        grayscale = cv2.cvtColor(region_of_interest, cv2.COLOR_RGB2GRAY)
+        self.region_of_interest = cv2.cvtColor(self.region_of_interest, cv2.COLOR_BGR2RGB)
+        grayscale = cv2.cvtColor(self.region_of_interest, cv2.COLOR_RGB2GRAY)
         guassian_blur = cv2.GaussianBlur(grayscale, (5,5), 2)
         ada_threshold = cv2.adaptiveThreshold(guassian_blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, 
                                     cv2.THRESH_BINARY_INV, 11, 2)
@@ -144,3 +178,18 @@ class HandSpeak:
             display_text += "|"  # Add the cursor at the end
 
         return display_text
+
+    def tkinter_handler(self, predict, text):
+        # preparing region of interest for tkinter
+        img = Image.fromarray(self.region_of_interest)
+        imgtk = ImageTk.PhotoImage(image=img)
+
+        # put image (ROI video capture) on the root window
+        self.video_label.imgtk = imgtk
+        self.video_label.config(image=imgtk)
+
+        # put texts on the root window
+        self.prediction_label.config(text=f"Prediction: {predict}")
+        self.typed_text_label.config(text=f"Typed Text: {text}")
+
+    

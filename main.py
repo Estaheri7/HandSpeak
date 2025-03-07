@@ -38,7 +38,7 @@ def main():
     model.eval()
 
     handspeak = HandSpeak(model, device, class_labels, transform)
-    handspeak.video_loop()
+    handspeak.run()
 
 if __name__ == '__main__':
     main()
