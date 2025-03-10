@@ -16,6 +16,17 @@ sys.path.append(os.path.abspath(".."))
 from models.resnet import ResNet 
 
 class HandSpeak:
+    """
+    A real-time American Sign Language (ASL) recognition system using a ResNet model for gesture classification.
+
+    Attributes:
+        model (ResNet or nn.Module): The pre-trained ResNet model for hand gesture recognition.
+        device (str): The device to run the model on ('cpu' or 'cuda').
+        class_labels (dict[int, str]): A mapping of class indices to gesture labels.
+        transform (transforms.Compose): Image transformation pipeline for preprocessing input frames.
+        buffer_size (int): The maximum number of predictions stored in the buffer.
+        typing_delay (float): Minimum delay before registering a new letter in the typed text.
+    """
     def __init__(self, model: ResNet,  device: str, class_labels: dict[int, str], transform: transforms.Compose,
                  buffer_size=20, typing_delay=1.3):
         self.device = device
@@ -81,13 +92,16 @@ class HandSpeak:
         self.typed_text_label.place(x=10, y=400)
     
     def run(self):
+        """Starts the Tkinter main loop and begins video processing."""
         self.video_loop()
         self.root.mainloop()
 
     def close_window(self):
+        """Closes the Tkinter window and stops the application."""
         self.root.quit()
 
     def video_loop(self):
+        """Captures video frames continuously, processes them, and updates the UI."""
         ret, frame = self.capture.read()
         if ret:
             frame = cv2.flip(frame, 1)  # Flip to simulate mirror image
@@ -99,10 +113,19 @@ class HandSpeak:
         self.root.after(10, self.video_loop)
         
     def terminate_video_loop(self):
+        """Releases the video capture and destroys the Tkinter window."""
         self.capture.release()
         self.root.destroy()
     
     def video_capture(self, frame):
+        """Processes a video frame to extract the hand gesture region and apply transformations.
+        
+        Args:
+            frame (np.ndarray): The captured video frame.
+        
+        Returns:
+            str: The most common predicted gesture.
+        """
         # Define region of interest for hand detection
         self.x1, self.y1 = 10, 10
         self.x2, self.y2 = int(0.5 * frame.shape[1]), int(0.5 * frame.shape[1])
@@ -124,6 +147,14 @@ class HandSpeak:
         return self.predict(processed_image)
 
     def predict(self, processed_image):
+        """Runs the model prediction on the processed image.
+        
+        Args:
+            processed_image (Image): The preprocessed hand gesture image.
+        
+        Returns:
+            str: The most common predicted gesture from the buffer.
+        """
         # Apply the same transformations
         processed_tensor = self.transform(processed_image).unsqueeze(0).to(self.device)
 
@@ -153,6 +184,14 @@ class HandSpeak:
             return most_common_prediction
 
     def text_handler(self, predicted_letter):
+        """Handles text input based on predictions and manages cursor blinking.
+        
+        Args:
+            predicted_letter (str): The recognized gesture letter.
+        
+        Returns:
+            str: The updated typed text with cursor display.
+        """
     # Add letter to typed_text only if enough time has passed
         current_time = time.time()
         if current_time - self.last_prediction_time > self.typing_delay:
@@ -180,6 +219,12 @@ class HandSpeak:
         return display_text
 
     def tkinter_handler(self, predict, text):
+        """Updates the Tkinter UI elements with the latest prediction and typed text.
+        
+        Args:
+            predict (str): The most common predicted gesture.
+            text (str): The currently typed text.
+        """
         # preparing region of interest for tkinter
         img = Image.fromarray(self.region_of_interest)
         imgtk = ImageTk.PhotoImage(image=img)
