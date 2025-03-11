@@ -21,7 +21,7 @@ HandSpeak is a real-time American Sign Language (ASL) recognition system that us
 
 Watch the outcome video demonstrating the HandSpeak system in action:
 
-![Outcome Video](https://github.com/user-attachments/assets/7d7a1891-cb72-4a78-b87b-ac567453e443)
+https://github.com/user-attachments/assets/7d7a1891-cb72-4a78-b87b-ac567453e443
 
 ## Installation
 
