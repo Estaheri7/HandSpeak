@@ -61,7 +61,7 @@ class HandSpeak:
         self.root.geometry("800x600")
         self.root.configure(bg='#272727')
         self.root.protocol("WM_DELETE_WINDOW", self.terminate_video_loop)
-        
+        self.root.wm_attributes("-topmost", True)
         # Remove the default title bar
         self.root.overrideredirect(True)
 
