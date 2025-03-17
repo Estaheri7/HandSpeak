@@ -1,6 +1,7 @@
 venv
 .vscode
 __pycache__
+data*
 dataset*
 np_features
 weights
