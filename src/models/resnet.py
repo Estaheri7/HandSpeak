@@ -51,7 +51,7 @@ class ResNet(nn.Module):
             nn.Linear(256, 128),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
-            nn.Linear(128, 29)
+            nn.Linear(128, 6)
         )
 
     
