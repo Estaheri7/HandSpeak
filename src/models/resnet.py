@@ -16,7 +16,7 @@ class ResNet(nn.Module):
         flatten (nn.Flatten): Flatten layer to prepare for fully connected layers.
         fc (nn.Sequential): Fully connected layers for classification.
     """
-    def __init__(self, in_channels=3):
+    def __init__(self, in_channels=3, out_dim=5):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, 64, kernel_size=3, padding=1)
         self.res1 = ResBlock(64)
@@ -51,7 +51,7 @@ class ResNet(nn.Module):
             nn.Linear(256, 128),
             nn.ReLU(inplace=True),
             nn.Dropout(0.4),
-            nn.Linear(128, 29)
+            nn.Linear(128, out_dim)
         )
 
     
@@ -63,7 +63,7 @@ class ResNet(nn.Module):
             x (Tensor): Input tensor of shape (batch_size, in_channels, height, width).
         
         Returns:
-            Tensor: Output tensor of shape (batch_size, 29) representing class scores.
+            Tensor: Output tensor of shape (batch_size, out_dim) representing class scores.
         """
         x = self.conv1(x)
         x = self.res1(x)
@@ -87,7 +87,7 @@ class ResNet(nn.Module):
 
         x = self.flatten(x)
         x = self.fc(x)
-        return x  # out put shape -> (batch_size, 29)
+        return x  # out put shape -> (batch_size, out_dim)
 
 
 class ResBlock(nn.Module):

@@ -1,7 +1,7 @@
 venv
 .vscode
 __pycache__
-data/raw
-data/processed
-dataset
+data*
+dataset*
+np_features
 weights
